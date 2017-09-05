@@ -1,0 +1,64 @@
+__precompile__()
+module HyperRotations
+
+include("HyperRotations/Versin.jl")
+include("HyperRotations/SinCos.jl")
+include("HyperRotations/HypotVec.jl")
+include("HyperRotations/UnitVecs.jl")
+include("HyperRotations/GeneralRotFuncs.jl")
+include("HyperRotations/CanonicalizeVecAngs.jl")
+include("HyperRotations/JacobianEuler.jl")
+include("HyperRotations/CanonicalizeEuler.jl")
+include("HyperRotations/EulerRotMats.jl")
+include("HyperRotations/EulerRots.jl")
+include("HyperRotations/TaitBryanRotMats.jl")
+include("HyperRotations/TaitBryanRots.jl")
+include("HyperRotations/LieRotMats.jl")
+include("HyperRotations/LowNRots.jl")
+include("HyperRotations/LowNRotMats.jl")
+
+export
+	canonicalizeSONEuler!,
+	canonicalizeSONEuler,
+	canonicalizeUnitVecAngles!,
+	canonicalizeUnitVecAngles,
+	matrixSONEuler,
+	anglesSONEuler!,
+	anglesSONEuler,
+	anglesSONEuler!,
+	anglesSONEuler,
+	rotateSONEuler!,
+	rotateSONEuler,
+	rotateSeq!,
+	rotateSeq,
+	matrixRotateSeq,
+	hypotVec,
+	jacobianSONEuler,
+	matrixSONLie,
+	matrixSO2,
+	matrixSO3ypr,
+	matrixSO3Euler,
+	matrixSO3AxisAng,
+	rotateSO3ypr!,
+	rotateSO3ypr,
+	rotateSO3Euler!,
+	rotateSO3Euler,
+	rotateSO3Euler!,
+	rotateSO3Euler,
+	rotateSO3AxisAng!,
+	rotateSO3AxisAng,
+	sincos,
+	sinver,
+	matrixSONTaitBryan,
+	rotateSONTaitBryan!,
+	rotateSONTaitBryan,
+	rotateSONTaitBryan!,
+	rotateSONTaitBryan,
+	unitVecFromPolarAngles,
+	normalizeVec!,
+	normalizeVec,
+	polarAnglesFromUnitVec,
+	versin,
+	coversin
+
+end #HyperRotations
