@@ -172,6 +172,7 @@ end #hyperBess_j0pprime
 Compute the first mmax zeros of the hyperspherical Bessel function of the first kind for
 symmetrical states.
 """
+#const MAX_NEWTON = convert(Int, )
 #Float64 optimized version
 function hyperBess_j0zeros( d::Float64, mmax::Int )
 	if mmax <= 0
@@ -183,22 +184,25 @@ function hyperBess_j0zeros( d::Float64, mmax::Int )
 	end
 
 	baseorder::Float64 = muladd(0.5, d, -1.0)
+	baseorderplus1::Float64 = baseorder + 1.0
 	#empirical function that gets near the first zero
 	guess::Float64 = sqrt((baseorder + 2.0)^2 - 1.0)
 
 	result::Array{Float64,1} = Array{Float64}(mmax)
 	converged::Bool = true
 
-	function f(x)
-		return hyperBess_j0(d, x)
-	end
+	#This function is not, exactly, hyperBess_j0, but it has the same zeros
+	#and falls off more slowly at large x
+	function f_fp(x::Float64)
+		f::Float64 = besselj(baseorder, x)
+		fp::Float64 = - besselj(baseorderplus1, x)
 
-	function fp(x)
-		return hyperBess_j0prime(d, x)
+		return (f, fp)
 	end
 
 	for m in 1:mmax
-		result[m], converged = findrootNewtonF64toF64(f, fp, guess)
+		result[m], converged = findrootNewtonF64toF64(f_fp, guess,
+				max_step_size=convert(Float64, pi/4), )
 		if !converged
 			error("hyperBess_j0zeros: failed to converge on zero $m with d=$d")
 		end
@@ -206,12 +210,13 @@ function hyperBess_j0zeros( d::Float64, mmax::Int )
 		guess = result[m] + pi
 	end
 
+
 	return result
 end#::Array{Float64,1} #hyperBess_j0zeros
 
 
 #Generic implementation
-function hyperBess_j0zeros( d::Real, mmax::Int, exampleval::Tp ) where Tp <: Number
+function hyperBess_j0zeros( d::Real, mmax::Int, exampleval::Tp ) where Tp <: Real
 	if mmax <= 0
 		error("hyperBess_j0zeros: mmax must be positive")
 	end
@@ -221,22 +226,24 @@ function hyperBess_j0zeros( d::Real, mmax::Int, exampleval::Tp ) where Tp <: Num
 	end
 
 	baseorder = convert(Tp, d)/2 - 1
+	baseorderplus1 = convert(Tp, d)/2
 	#empirical function that gets near the first zero
 	guess = sqrt((baseorder + 2)^2 - 1)
 
 	result = Array{Tp}(mmax)
 	converged::Bool = true
 
-	function f(x::Tp)
-		hyperBess_j0(d, x)
-	end
+	function f_fp(x::Tp)
+		rootx = sqrt(x)
+		f::Tp = besselj(baseorder, x) * rootx
+		fp::Tp = - besselj(baseorderplus1, x) * rootx
 
-	function fp(x::Tp)
-		hyperBess_j0prime(d, x)
+		return (f, fp)
 	end
 
 	for m in 1:mmax
-		result[m], converged = findrootNewton(f, fp, guess)
+		result[m], converged = findrootNewton(f_fp, guess,
+				max_step_size=convert(Tp, pi/4))
 		if !converged
 			error("hyperBess_j0zeros: failed to converge on zero $m with d=$d")
 		end

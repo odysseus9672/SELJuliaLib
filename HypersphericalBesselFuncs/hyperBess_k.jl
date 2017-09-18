@@ -45,7 +45,7 @@ function hyperBess_k(d::Real, l::Real, x::Tp) where Tp<:Number
 		result *= (x/2)^(-baseorder)
 
 	else
-		error("hyperBess_k: x = 0 outside of domain."))
+		error("hyperBess_k: x = 0 outside of domain.")
 	end # if abs(x) > 0
 
 	return result
@@ -114,7 +114,7 @@ function hyperBess_kprime(d::Real, l::Real, x::Tp) where Tp<:Number
 		result *= (x/2)^(-baseorder) * gamma(baseorder + 1)
 
 	else
-		error("hyperBess_kprime: x = 0 outside of domain."))
+		error("hyperBess_kprime: x = 0 outside of domain.")
 	end # if abs(x) > 0
 
 	return result

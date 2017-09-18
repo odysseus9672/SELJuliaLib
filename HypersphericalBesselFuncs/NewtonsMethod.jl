@@ -1,10 +1,11 @@
 
 """
-    findrootNewtonF64toF64( func, funcder, guess, rtol=1e-12, abstol=1e-12, maxiter=100 )
+    findrootNewtonF64toF64( f_fprime, guess, rtol=1e-12, abstol=1e-12, maxiter=100 )
 
-Finds a root of `func` using Newton's method starting from `guess`, and signals
+Finds a root of `f` using Newton's method starting from `guess`, and signals
 whether the algorithm converged to at least one of the tolerance goals within
-`maxiter` loops. `funcder` must be the derivative of `func`. The iterative step is:
+`maxiter` loops. `f_fprime` must return both the function, `f`, and its derivative,
+`fprime`. The iterative step is:
 
 ``x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}``
 
@@ -12,10 +13,13 @@ whether the algorithm converged to at least one of the tolerance goals within
 tolerance goal, satisfying either of which is considered a successful search.
 `func` and `funcder` must be type isomorphisms (maps from a subtype of Number to
 the same subtype of Number), with that subtype fixed by the type of `guess`.
+This implementation has been tuned to be optimized for finding zeros of Bessel
+functions.
 """
 #Float64 optimized version
-function findrootNewtonF64toF64( func, funcder, guess::Float64,
-	rtol::Float64=1e-12, abstol::Float64=1e-12, maxiter::Int=100 )
+function findrootNewtonF64toF64( f_fprime, guess::Float64;
+	rtol::Float64=16*eps(Float64), abstol::Float64=eps(Float64)/16, maxiter::Int=100,
+	max_step_size::Float64=0.25 * pi )
 	#make sure tolerances are positive
 	if rtol <= 0.0
 		error("findrootNewton: rtol must be a positive number")
@@ -29,26 +33,39 @@ function findrootNewtonF64toF64( func, funcder, guess::Float64,
 		error("findrootNewton: maxiter must be a positive integer")
 	end
 
+	if max_step_size <= 0.0
+		error("findrootNewton: max_step_size must be a positive number")
+	end
+
 	converged::Bool = false
 
 	oldx::Float64 = guess
-	newx::Float64 = oldx - ((func(oldx) / funcder(oldx))::Float64)
-	absdiff = abs(oldx - newx)
+	f::Float64, fp::Float64 = f_fprime(oldx)
+	Newton_step::Float64 = f/fp
+	absdiff::Float64 = min(abs(Newton_step), max_step_size)
+	newx::Float64 = oldx - sign(Newton_step) * absdiff
+
 
 	iter::Int = 2
-	while (absdiff > abstol || absdiff > rtol * abs(newx)) && iter <= maxiter
+	while absdiff > abstol && absdiff > rtol * abs(newx) && iter <= maxiter
 		oldx = newx
-		newx = oldx - func(oldx) / funcder(oldx)
+		f, fp = f_fprime(oldx)
+		Newton_step = f/fp
+		absdiff = min(abs(Newton_step), max_step_size)
+		newx = oldx - sign(Newton_step) * absdiff
+
 		if newx < 0.0
 			newx = eps(Float64)
+			absdiff = abs(newx - oldx)
 		end
-		absdiff = abs(oldx - newx)
 
 		iter += 1
 	end #while (absdiff < abstol || absdiff < rtol * abs(newx)) && newxiter <= maxiter
 
 	if iter <= maxiter
 		converged = true
+	else
+		println( (guess, oldx, newx) )
 	end
 
 	return (newx, converged)
@@ -56,8 +73,10 @@ end#::Tuple{Float64,Bool} #findrootNewtonF64toF64
 
 
 #Generic version
-function findrootNewton( func, funcder, guess::Tp,
-						rtol::Real=1e-12, abstol::Real=1e-12, maxiter::Int=100 ) where Tp <: Number
+function findrootNewton( f_fprime, guess::Tp;
+						rtol::Tp2=16 * eps(Tp2), abstol::Tp3=eps(Tp3)/16,
+						maxiter::Int=100,
+						max_step_size = convert(Tp, pi/4) ) where {Tp <: Number, Tp2 <: Real, Tp3 <: Real}
 	#make sure tolerances are positive
 	if rtol <= 0
 		error("findrootNewton: rtol must be a positive number")
@@ -71,16 +90,26 @@ function findrootNewton( func, funcder, guess::Tp,
 		error("findrootNewton: maxiter must be a positive integer")
 	end
 
+	if max_step_size <= 0
+		error("findrootNewton: max_step_size must be a positive number")
+	end
+
 	converged::Bool = false
 
 	oldx = guess
-	newx = oldx - ((func(oldx) / funcder(oldx))::Tp)
-	absdiff = abs(oldx - newx)
+	f, fp = f_fprime(oldx)
+	Newton_step = f/fp
+	absdiff = min(abs(Newton_step), max_step_size)
+	newx = oldx - sign(Newton_step) * absdiff
+
 
 	iter::Int = 2
-	while (absdiff < abstol || absdiff < rtol * abs(newx)) && iter <= maxiter
+	while absdiff > abstol && absdiff > rtol * abs(newx) && iter <= maxiter
 		oldx = newx
-		newx = oldx - func(oldx) / funcder(oldx)
+		f, fp = f_fprime(oldx)
+		Newton_step = f/fp
+		absdiff = min(abs(Newton_step), max_step_size)
+		newx = oldx - sign(Newton_step) * absdiff
 		absdiff = abs(oldx - newx)
 
 		iter += 1
