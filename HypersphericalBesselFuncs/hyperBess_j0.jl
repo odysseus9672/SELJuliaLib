@@ -248,7 +248,7 @@ function hyperBess_j0zeros( d::Real, mmax::Int, exampleval::Tp ) where Tp <: Rea
 			error("hyperBess_j0zeros: failed to converge on zero $m with d=$d")
 		end
 
-		guess += pi
+		guess = result[m] + pi
 	end
 
 	return result
